@@ -1,13 +1,14 @@
 #include <ti/devices/msp432p4xx/driverlib/driverlib.h>
+#include <string.h>
 #include "homework4.h"
 
 int main(void)
 {
-    char rChara;
+    char rChar;
     char *response = "\n\n\r2534 is the best course in the curriculum!\r\n\n";
 
     // TODO: Declare the variables that main uses to interact with your state machine.
-    bool finished;
+    bool finished = false;
 
 
     // Stops the Watchdog timer.
@@ -43,7 +44,6 @@ int main(void)
     // TODO: Enable EUSCI_A0
     UART_enableModule(EUSCI_A0_BASE);
 
-
     while(1)
     {
         // TODO: Check the receive interrupt flag to see if a received character is available.
@@ -51,28 +51,35 @@ int main(void)
 
         if (UART_getInterruptStatus (EUSCI_A0_BASE, EUSCI_A_UART_RECEIVE_INTERRUPT_FLAG)
                         == EUSCI_A_UART_RECEIVE_INTERRUPT_FLAG)
-           rChara = UART_receiveData(EUSCI_A0_BASE);
+           rChar = UART_receiveData(EUSCI_A0_BASE);
         else
-            rChara = 0xFF;
+            rChar = 0xFF;
 
 
         // TODO: If an actual character was received, echo the character to the terminal AND use it to update the FSM.
         //       Check the transmit interrupt flag prior to transmitting the character.
 
             if ((UART_getInterruptStatus (EUSCI_A0_BASE, EUSCI_A_UART_TRANSMIT_INTERRUPT_FLAG)
-                                == EUSCI_A_UART_TRANSMIT_INTERRUPT_FLAG) && (rChara != 0xFF)){
-                UART_transmitData(EUSCI_A0_BASE, rChara);
-                charFSM(rChara);
+                                == EUSCI_A_UART_TRANSMIT_INTERRUPT_FLAG) && (rChar != 0xFF)){
+                UART_transmitData(EUSCI_A0_BASE, rChar);
+                finished = charFSM(rChar);
             }
 
 
         // TODO: If the FSM indicates a successful string entry, transmit the response string.
         //       Check the transmit interrupt flag prior to transmitting each character and moving on to the next one.
         //       Make sure to reset the success variable after transmission.
+
+
             if (finished == true)
-                UART_transmitData(EUSCI_A0_BASE, *response);
-
-
+            {
+                int i = 0;
+                for (i = 0; i < strlen(response); i++)
+                {
+                    UART_transmitData(EUSCI_A0_BASE, response[i]);
+                }
+                finished = false;
+            }
 
     }
 }
@@ -92,34 +99,28 @@ bool charFSM(char rChar)
 
     switch (currentState) {
         case SX:
-            if (rChar == 2)
+            if (rChar == '2')
                 currentState = S2;
             break;
 
         case S2:
-            if (rChar == 5)
+            if (rChar == '5')
                 currentState = S25;
             else
                 currentState = SX;
             break;
 
         case S25:
-            if (rChar == 3)
+            if (rChar == '3')
                 currentState = S253;
             else
                 currentState = SX;
             break;
 
         case S253:
-            if (rChar == 4){
-                currentState = S2534;
+            if (rChar == '4'){
                 finished = true;
             }
-            else
-                currentState = SX;
-            break;
-
-        case S2534:
             currentState = SX;
             break;
     }
