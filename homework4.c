@@ -1,9 +1,9 @@
 #include <ti/devices/msp432p4xx/driverlib/driverlib.h>
 #include "homework4.h"
 
-int main(void}
+int main(void)
 {
-    char rChar;
+    char rChara;
     char *response = "\n\n\r2534 is the best course in the curriculum!\r\n\n";
 
     // TODO: Declare the variables that main uses to interact with your state machine.
@@ -51,24 +51,27 @@ int main(void}
 
         if (UART_getInterruptStatus (EUSCI_A0_BASE, EUSCI_A_UART_RECEIVE_INTERRUPT_FLAG)
                         == EUSCI_A_UART_RECEIVE_INTERRUPT_FLAG)
-           rChar = UART_receiveData(EUSCI_A0_BASE);
+           rChara = UART_receiveData(EUSCI_A0_BASE);
         else
-            rChar = 0xFF;
+            rChara = 0xFF;
 
 
         // TODO: If an actual character was received, echo the character to the terminal AND use it to update the FSM.
         //       Check the transmit interrupt flag prior to transmitting the character.
 
             if ((UART_getInterruptStatus (EUSCI_A0_BASE, EUSCI_A_UART_TRANSMIT_INTERRUPT_FLAG)
-                                == EUSCI_A_UART_TRANSMIT_INTERRUPT_FLAG) && (rChar != 0xFF)){
-                UART_transmitData(EUSCI_A0_BASE, rChar);
-                charFSM(rChar)
+                                == EUSCI_A_UART_TRANSMIT_INTERRUPT_FLAG) && (rChara != 0xFF)){
+                UART_transmitData(EUSCI_A0_BASE, rChara);
+                charFSM(rChara);
             }
 
 
         // TODO: If the FSM indicates a successful string entry, transmit the response string.
         //       Check the transmit interrupt flag prior to transmitting each character and moving on to the next one.
         //       Make sure to reset the success variable after transmission.
+            if (finished == true)
+                UART_transmitData(EUSCI_A0_BASE, *response);
+
 
 
     }
@@ -84,6 +87,42 @@ bool charFSM(char rChar)
 {
     bool finished = false;
 
+    typedef enum {SX, S2, S25, S253, S2534} code;
+    static code currentState = SX;
+
+    switch (currentState) {
+        case SX:
+            if (rChar == 2)
+                currentState = S2;
+            break;
+
+        case S2:
+            if (rChar == 5)
+                currentState = S25;
+            else
+                currentState = SX;
+            break;
+
+        case S25:
+            if (rChar == 3)
+                currentState = S253;
+            else
+                currentState = SX;
+            break;
+
+        case S253:
+            if (rChar == 4){
+                currentState = S2534;
+                finished = true;
+            }
+            else
+                currentState = SX;
+            break;
+
+        case S2534:
+            currentState = SX;
+            break;
+    }
 
     return finished;
 }
