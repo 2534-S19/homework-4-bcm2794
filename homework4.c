@@ -1,5 +1,4 @@
 #include <ti/devices/msp432p4xx/driverlib/driverlib.h>
-#include <string.h>
 #include "homework4.h"
 
 int main(void)
@@ -74,7 +73,7 @@ int main(void)
             if (finished == true)
             {
                 int i = 0;
-                for (i = 0; i < strlen(response); i++)
+                for (i = 0; response[i] != 0; i++)
                 {
                     UART_transmitData(EUSCI_A0_BASE, response[i]);
                 }
